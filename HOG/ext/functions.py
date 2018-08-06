@@ -171,8 +171,8 @@ def HOGCalc(img,blk_size,n):
             hog[cell_i+1,cell_j+1,cell_id2] = hog[cell_i+1,cell_j+1,cell_id2] + mag[i][j]*(w_i)*(w_j)*(w_id)
     for i in arange(1,hog.shape[0]-2):
         for j in arange(1,hog.shape[1]-2):
-            #blk_norm = sqrt(sum(hog[i:i+2,j:j+2].reshape(4*n)**2)+eps**2)
-            hog[i,j] /=blk_norm
+            cell_norm = sqrt(sum(hog[i,j]**2)+eps**2)
+            hog[i,j] /= cell_norm
     return hog[1:-1,1:-1]
 
 def HOG_pic(img,hog):

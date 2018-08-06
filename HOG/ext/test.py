@@ -1,7 +1,7 @@
 from HOG.ext import functions as fun
 import cv2
 import numpy as np
-from HOG.ext.ReadXML import ReadXML
+#from HOG.ext.ReadXML import ReadXML
 import matplotlib.pyplot as plt
 
 home = 'C:/Users/peter/Documents/GitHub/SummerCamp2018/HOG/'
