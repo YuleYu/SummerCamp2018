@@ -2,8 +2,7 @@ import cv2
 from copy import deepcopy
 from numpy import *
 
-#home = "C://Users/peter/Documents/basketball/"
-home = "/User/yule/Desktop/basketball"
+home = '.'
 cap = cv2.VideoCapture(home+"/video/dongdan_4_1_04011530.mp4")
 success,frame = cap.read()
 frame_count=0
