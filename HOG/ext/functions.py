@@ -136,9 +136,9 @@ def Gradient(img):
     dy[size_y-1,:]=dy[size_y-2,:]
     return [dx,dy]
 
-def HOGCalc(img,n):
+def HOGCalc(img,cell_width, n):
     interval = 180/n
-    cell_width = 8 / 2
+    half_cell_width = cell_width / 2
     eps = 0.001
     (dx,dy) = Gradient(img)
     mag = sqrt(dx*dx+dy*dy)
@@ -146,23 +146,21 @@ def HOGCalc(img,n):
     size_y,size_x = img.shape
     # bins = zeros((n,size_y,size_x))
     bin_id = (floor(ang/interval)%n).astype(int16)
-    hog = zeros((int(floor(size_y/8))+2,int(floor(size_x/8))+2,n))
+    hog = zeros((int(floor(size_y/cell_width))+2,int(floor(size_x/cell_width))+2,n))
     for i in arange(size_y):
 
         for j in arange(size_x):
-            cell_i = int(floor((i-cell_width)/8)) + 1
-            cell_j = int(floor((j-cell_width)/8)) + 1
+            cell_i = int(floor((i-half_cell_width)/cell_width)) + 1
+            cell_j = int(floor((j-half_cell_width)/cell_width)) + 1
             cell_id = bin_id[i][j]
             cell_id2= (cell_id+1)%n
             #Calculate HOG in adjacent cells and bins
-            w_i =(i/8.-cell_i)% 1
-            w_j =(j/8.-cell_j)% 1
+            w_i =(i/cell_width-cell_i)% 1
+            w_j =(j/cell_width-cell_j)% 1
 
 
             w_id = ang[i][j]/interval-cell_id
-            print("%f,%f,%f\n"%(w_i,w_j,w_id))
-            if (w_id > 9 ):
-                print("%d,%f\n"%(cell_id,ang[i][j]))
+            # print("%f,%f,%f\n"%(w_i,w_j,w_id))
             hog[cell_i,cell_j,cell_id] = hog[cell_i,cell_j,cell_id] + mag[i][j]*(1-w_i)*(1-w_j)*(1-w_id)
             hog[cell_i,cell_j,cell_id2] = hog[cell_i,cell_j,cell_id2] + mag[i][j]*(1-w_i)*(1-w_j)*(w_id)
             hog[cell_i+1,cell_j,cell_id] = hog[cell_i+1,cell_j,cell_id] + mag[i][j]*(w_i)*(1-w_j)*(1-w_id)
@@ -172,19 +170,20 @@ def HOGCalc(img,n):
             hog[cell_i+1,cell_j+1,cell_id] = hog[cell_i+1,cell_j+1,cell_id] + mag[i][j]*(w_i)*(w_j)*(1-w_id)
             hog[cell_i+1,cell_j+1,cell_id2] = hog[cell_i+1,cell_j+1,cell_id2] + mag[i][j]*(w_i)*(w_j)*(w_id)
     hog1=zeros(hog.shape,float)
-    for i in arange(hog.shape[0]):
-        for j in arange(hog.shape[1]):
-            cell_norm = sqrt(sum(hog[i,j]**2)+eps**2)
-            hog1[i,j,:] = hog[i,j,:]/cell_norm
-    # return [hog[1:-1,1:-1],hog1[1:-1,1:-1]]
-    return [hog,hog1]
+    for i in arange(1,hog.shape[0]-2):
+        for j in arange(1,hog.shape[1]-2):
+            blk_norm = sqrt(sum(hog[i:i+2,j:j+2].reshape(4*n)**2)+eps**2)
+            hog1[i:i+2,j:j+2,:] = hog[i:i+2,j:j+2,:]/blk_norm
+    return [hog[1:-1,1:-1],hog1[1:-1,1:-1]]
 
 def HOG_pic(img,hog):
     size_y,size_x = img.shape
     cell_size = 32
     cell_width = cell_size/2
     max_mag = hog.max()
-    hog_image = zeros([size_y*4,size_x*4])
+    # hog_image = zeros([size_y*4,size_x*4])
+    img_shape = (hog.shape[0]*cell_size,hog.shape[1]*cell_size)
+    hog_image = cv2.resize(img,img_shape,interpolation=cv2.INTER_NEAREST)
     for x in range(hog.shape[0]):
         for y in range(hog.shape[1]):
             cell_grad = hog[x][y]
@@ -193,16 +192,16 @@ def HOG_pic(img,hog):
             angle_gap = 180/(hog.shape[2])
             for magnitude in cell_grad:
                 angle_radian =radians(angle)
-                x1 = int(x * cell_size+ magnitude * cell_width * cos(angle_radian)+cell_width)
+                x1 = int(x * cell_size- magnitude * cell_width * cos(angle_radian)+cell_width)
                 y1 = int(y * cell_size+ magnitude * cell_width * sin(angle_radian)+cell_width)
-                x2 = int(x * cell_size- magnitude * cell_width * cos(angle_radian)+cell_width)
+                x2 = int(x * cell_size+ magnitude * cell_width * cos(angle_radian)+cell_width)
                 y2 = int(y * cell_size- magnitude * cell_width * sin(angle_radian)+cell_width)
-                cv2.line(hog_image,(y1,x1),(y2,x2),int(255*sqrt(magnitude)))
+                cv2.line(hog_image,(y1,x1),(y2,x2),int(255-255*sqrt(magnitude)))
                 angle += angle_gap
     return hog_image
 
 def HOG_pic_cv2(img,hog):
-    size_y,size_x = img.shape
+    # size_y,size_x = img.shape
     cell_size = 32
     cell_width = cell_size/2
     #max_mag = hog.max()
