@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<catalog>
+    <startTime>0</startTime>
+    <endTime>1800</endTime>
+    <imgPath>/Users/yule/Desktop/summerCamp</imgPath>
+    <size_x>48</size_x>
+    <size_y>48</size_y>
+    <fps>25</fps>
+    <colSize>5</colSize>
+</catalog>
