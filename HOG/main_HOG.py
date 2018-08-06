@@ -11,7 +11,7 @@ import HOG.ext.ReadXML
 
 script_path = './script/'
 mainScript = f"{script_path}{'main_HOG.xml'}"
-startHOGpic, endHOGpic, showMidResult, video_choice = HOG.ext.ReadXML.ReadMainXML(mainScript)
+startHOGpic, endHOGpic, showMidResult, video_choice, get_region = HOG.ext.ReadXML.ReadMainXML(mainScript)
 # ========= setting ====================
 #video_choice = 'video1'
 # script_name = 'script_example.xml'
@@ -32,7 +32,6 @@ imgPath, size_x, size_y, startTime, endTime, colSize, fps, bin = HOG.ext.ReadXML
 
 
 # get_region
-get_region = False
 if get_region == True:
     drawing = False  # 如果按下鼠标，则为true
     mode = True  # 如果是 True 则画矩形。按 m 键变成绘制曲线。
