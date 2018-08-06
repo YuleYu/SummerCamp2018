@@ -33,7 +33,7 @@ def DrawRectangle(event,x,y,flags,param):
         cv2.rectangle(frame_tmp,(ix,iy),(x1,y1),(255,0,0),0)
         x_final,y_final = x1,y1
         
-def GetRegion(img):
+def GetRegion(img: object) -> object:
     #Function performing region cropping
     global frame_tmp,frame
     frame = deepcopy(img)
@@ -46,14 +46,14 @@ def GetRegion(img):
             break
     cv2.destroyAllWindows()
     
-home = "/Users/yule/Desktop/basketball"
-cap = cv2.VideoCapture(home+"/video/dongdan_4_1_04011530.mp4")
-success,frame = cap.read()
-cv2.namedWindow('img')
-
-GetRegion(frame)
-form = "%5d\t%5d\n" 
-f=open(home+"target_index.txt",'w')
-f.write(form %( ix, x_final))
-f.write(form % (iy, y_final))
-f.close()
+# home = "/Users/yule/Desktop/basketball"
+# cap = cv2.VideoCapture(home+"/video/dongdan_4_1_04011530.mp4")
+# success,frame = cap.read()
+# cv2.namedWindow('img')
+#
+# GetRegion(frame)
+# form = "%5d\t%5d\n"
+# f=open(home+"target_index.txt",'w')
+# f.write(form %( ix, x_final))
+# f.write(form % (iy, y_final))
+# f.close()
