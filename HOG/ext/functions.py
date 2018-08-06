@@ -41,6 +41,7 @@ def CalcCriterion(t_start,t_end,fps,n_col,size_y,size_x,packed_pic):
 
 def FindCandidates(data,threshold,window):
     candidates = zeros(data.size,uint)
+    previous = 0
     for i in arange(data.size-window):
         if candidates[i]==0:
             if data[i]<threshold:
@@ -101,26 +102,26 @@ def LocateCandidatesByF(data,threshold,window,lag):
             frame_list.append([start,end,end-start])
     return frame_list
 
-def draw_circle(event,x,y,flags,param):
-    global ix,iy,drawing,mode
-    #当按下左键时返回起始位置坐标
-    if event == cv2.EVENT_LBUTTONDOWN:
-        drawing = True
-        ix,iy = x,y
-     #当鼠标左键按下并移动时是绘制图形
-    elif event == cv2.EVENT_MOUSEMOVE:
-        if drawing == True:
-            if mode == True:
-                cv2.rectangle(img,(ix,iy),(x,y),(0,255,0),1)
-            else:
-                cv2.circle(img,(x,y),5,(0,0,255),-1)
-     #鼠标松开停止绘画
-    elif event == cv2.EVENT_LBUTTONUP:
-        drawing = False
-        if mode == True:
-            cv2.rectangle(img,(ix,iy),(x,y),(0,255,0),1)
-        else:
-            cv2.circle(img,(x,y),5,(0,0,255),1)
+# def draw_circle(event,x,y,flags,param):
+#     global ix,iy,drawing,mode
+#     #当按下左键时返回起始位置坐标
+#     if event == cv2.EVENT_LBUTTONDOWN:
+#         drawing = True
+#         ix,iy = x,y
+#      #当鼠标左键按下并移动时是绘制图形
+#     elif event == cv2.EVENT_MOUSEMOVE:
+#         if drawing == True:
+#             if mode == True:
+#                 cv2.rectangle(img,(ix,iy),(x,y),(0,255,0),1)
+#             else:
+#                 cv2.circle(img,(x,y),5,(0,0,255),-1)
+#      #鼠标松开停止绘画
+#     elif event == cv2.EVENT_LBUTTONUP:
+#         drawing = False
+#         if mode == True:
+#             cv2.rectangle(img,(ix,iy),(x,y),(0,255,0),1)
+#         else:
+#             cv2.circle(img,(x,y),5,(0,0,255),1)
 
 def Gradient(img):
     img = img.astype(float)
@@ -135,8 +136,9 @@ def Gradient(img):
     dy[size_y-1,:]=dy[size_y-2,:]
     return [dx,dy]
 
-def HOGCalc(img,n):
+def HOGCalc(img,blk_size,n):
     interval = 180/n
+    eps = 0.1
     (dx,dy) = Gradient(img)
     mag = sqrt(dx*dx+dy*dy)
     ang = cv2.phase(dx, dy, angleInDegrees=True) % 180
@@ -167,6 +169,10 @@ def HOGCalc(img,n):
             hog[cell_i,cell_j+1,cell_id2] = hog[cell_i,cell_j+1,cell_id2] + mag[i][j]*(1-w_i)*(w_j)*(w_id)
             hog[cell_i+1,cell_j+1,cell_id] = hog[cell_i+1,cell_j+1,cell_id] + mag[i][j]*(w_i)*(w_j)*(1-w_id)
             hog[cell_i+1,cell_j+1,cell_id2] = hog[cell_i+1,cell_j+1,cell_id2] + mag[i][j]*(w_i)*(w_j)*(w_id)
+    for i in arange(1,hog.shape[0]-2):
+        for j in arange(1,hog.shape[1]-2):
+            #blk_norm = sqrt(sum(hog[i:i+2,j:j+2].reshape(4*n)**2)+eps**2)
+            hog[i,j] /=blk_norm
     return hog[1:-1,1:-1]
 
 def HOG_pic(img,hog):
@@ -190,10 +196,32 @@ def HOG_pic(img,hog):
                 cv2.line(hog_image,(y1,x1),(y2,x2),int(255*math.sqrt(magnitude)))
                 angle += angle_gap
     return hog_image
-    
-def ReadPackedImg(fname):
+
+def HOG_pic_cv2(img,hog):
+    size_y,size_x = img.shape
+    cell_size = 32
+    cell_width = cell_size/2
+    #max_mag = hog.max()
+    max_mag =1
+    hog_image = zeros([hog.shape[0]*cell_size,hog.shape[1]*cell_size])
+    for x in range(hog.shape[0]):
+        for y in range(hog.shape[1]):
+            cell_grad = hog[x][y]
+            cell_grad /= max_mag
+            angle = 0
+            angle_gap = 180/(hog.shape[2])
+            for magnitude in cell_grad:
+                angle_radian = math.radians(angle)
+                x1 = int(x * cell_size+ magnitude * cell_width * math.sin(angle_radian)+cell_width)
+                y1 = int(y * cell_size+ magnitude * cell_width * math.cos(angle_radian)+cell_width)
+                x2 = int(x * cell_size- magnitude * cell_width * math.sin(angle_radian)+cell_width)
+                y2 = int(y * cell_size- magnitude * cell_width * math.cos(angle_radian)+cell_width)
+                cv2.line(hog_image,(y1,x1),(y2,x2),int(255*math.sqrt(magnitude)))
+                angle += angle_gap
+    return hog_image
+def ReadPackedImg(fname,home):
     fppc = open(home+fname+'.ppc','r')
-    fpng = "".join(fppc.readline().split())
+    fpng = (home+fname+'.png')
     packed_img = cv2.imread(fpng,0)
     t_start,t_end = list(map(int,fppc.readline().split()))
     fps = int(fppc.readline())

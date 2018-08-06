@@ -1,6 +1,6 @@
 import xml.dom.minidom
 
-def readXML(path):
+def ReadXML(path):
     dom = xml.dom.minidom.parse(path)
 
     root = dom.documentElement
