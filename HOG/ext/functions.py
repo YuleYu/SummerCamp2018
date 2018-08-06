@@ -136,7 +136,7 @@ def Gradient(img):
     dy[size_y-1,:]=dy[size_y-2,:]
     return [dx,dy]
 
-def HOGCalc(img,blk_size,n):
+def HOGCalc(img,n):
     interval = 180/n
     eps = 0.1
     (dx,dy) = Gradient(img)
