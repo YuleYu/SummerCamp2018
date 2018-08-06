@@ -8,26 +8,28 @@ from HOG.ext.functions import HOGCalc, HOG_pic
 from HOG.ext.get_region import GetRegion
 import HOG.ext.ReadXML
 
+
+script_path = './script/'
+mainScript = f"{script_path}{'main_HOG.xml'}"
+startHOGpic, endHOGpic, showMidResult, video_choice = HOG.ext.ReadXML.ReadMainXML(mainScript)
 # ========= setting ====================
-video_choice = 'video1'
+#video_choice = 'video1'
 # script_name = 'script_example.xml'
 # video_name = 'video1.mp4'
 # ======================================
 
 pic_path = './pic/'
-script_path = './script/'
 video_path = './video/'
 pic_name = '{0}.png'.format(video_choice)
 script_name = '{0}.xml'.format(video_choice)
 video_name = '{0}.mp4'.format(video_choice)
 
 # read in script
-mainScript = f"{script_path}{'main_HOG.xml'}"
 script = "{0}{1}".format(script_path, script_name)
 pic = "{0}{1}".format(pic_path, pic_name)
 video = "{0}{1}".format(video_path, video_name)
 imgPath, size_x, size_y, startTime, endTime, colSize, fps, bin = HOG.ext.ReadXML.ReadXML(script)
-startHOGpic, endHOGpic, showMidResult = HOG.ext.ReadXML.ReadMainXML(mainScript)
+
 
 # get_region
 get_region = False
@@ -76,5 +78,7 @@ if showMidResult == True:
 mean_value = []
 for every_img in hogDic:
     mean_value.append(mean(every_img))
+
+
 
 print('over')

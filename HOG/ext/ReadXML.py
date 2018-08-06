@@ -23,6 +23,7 @@ def ReadMainXML(path: object) -> object:
 
     startFrame = int(root.getElementsByTagName('startHOGpic')[0].childNodes[0].data)
     endFrame = int(root.getElementsByTagName('endHOGpic')[0].childNodes[0].data)
-    showMidResult = bool(root.getElementsByTagName('midResult')[0].childNodes[0].data)
+    showMidResult = bool(int(root.getElementsByTagName('midResult')[0].childNodes[0].data))
+    video_choice = root.getElementsByTagName('videoName')[0].childNodes[0].data
 
-    return startFrame, endFrame, showMidResult
+    return startFrame, endFrame, showMidResult, video_choice
