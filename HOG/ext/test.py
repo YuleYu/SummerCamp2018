@@ -4,11 +4,9 @@ import cv2
 import numpy as np
 import datetime
 import random
-#from HOG.ext.ReadXML import ReadXML
+# from HOG.ext.ReadXML import ReadXML
 import matplotlib.pyplot as plt
 
-home = 'C:/Users/peter/Documents/GitHub/SummerCamp2018/HOG/'
-scriptpath = 'script/'
 
 
 t_start,t_end,fps,n_col,size_y,size_x,packed_img = fun.ReadPackedImg('result/video1',home)
@@ -156,6 +154,7 @@ def LRLearning(train):
     #主循环,采用简单学习率衰减法
     while err > max_err and it < max_iter:
         it += 1
+
         #计算下降方向
         grad_direct = LRDLoss(w,train)
         grad_mag = np.sqrt(sum(grad_direct**2))
@@ -171,26 +170,33 @@ def LRLearning(train):
             err,loss,w=err_new,loss_new,w_new
         print("err:%f,step:%f,loss:%f"%(err,step,loss))
         curve.append(loss)
-
     return w
 
 def LRTest(w,test):
+    roc_dots = []
     for sample in test:
         y = sample[1]
         x = sample[2:sample.size]
         x = np.append(x,1)
         value = np.dot(w,x)
+        roc_dots.append([sample[0],y,value])
+    roc_dots = np.array(roc_dots)
+    roc_dots = roc_dots[np.lexsort(roc_dots.T)]
+    (x,y) = (0,0)
+    roc_curve = [[x,y]]
+    n_pos = sum(test[:,1])
+    n_neg = test.shape[0] - n_pos
+    for elem in roc_dots:
+        if elem[1] == 1:
+            x += 1.0 / n_pos
+        elif elem[1] == 0:
+            y += 1.0 / n_neg
+        roc_curve.append([x,y])
+    roc_curve = np.array(roc_curve)
+    plt.plot(np.log10(roc_curve[:,0]),roc_curve[:,1])
+    return roc_curve
 
 
 w = LRLearning(train)
-
-
-    #计算lossfunction
-
-    #计算lossfunction导数
-
-    #确定学习率alpha
-
-
-
+LRTest(w,test)
 
