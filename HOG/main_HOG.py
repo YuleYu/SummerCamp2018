@@ -54,7 +54,8 @@ img = cv.imread(pic, 0)
 #     col = floor(i % colSize)
 #     img_show += img[raw*size_y:raw*size_y+size_y-1, col*size_x:col*size_x+size_x-1]
 img_show = img[int(size_y) * startHOGpic:(int(size_y) * endHOGpic - 1), 0:(int(size_x) * int(colSize) - 1)]
-hog = HOGCalc(img_show, int(bin))
+#hog = HOGCalc(img_show, int(bin))
+hog = HOGCalc(img, int(bin))
 hog_image = HOG_pic(img_show, hog)
 
 num_col, num_raw = img.shape
@@ -77,7 +78,6 @@ if showMidResult == True:
 mean_value = []
 for every_img in hogDic:
     mean_value.append(mean(every_img))
-
 
 
 print('over')
