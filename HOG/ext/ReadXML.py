@@ -27,4 +27,4 @@ def ReadMainXML(path: object) -> object:
     video_choice = root.getElementsByTagName('videoName')[0].childNodes[0].data
     get_region = bool(int(root.getElementsByTagName('getRegion')[0].childNodes[0].data))
 
-    return startFrame, endFrame, showMidResult, video_choice, get_regions
+    return startFrame, endFrame, showMidResult, video_choice, get_region

@@ -10,7 +10,7 @@ import HOG.ext.ReadXML
 
 
 script_path = './script/'
-mainScript = f"{script_path}{'main_HOG.xml'}"
+mainScript = script_path + 'main_HOG.xml'
 startHOGpic, endHOGpic, showMidResult, video_choice, get_region = HOG.ext.ReadXML.ReadMainXML(mainScript)
 # ========= setting ====================
 #video_choice = 'video1'
