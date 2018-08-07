@@ -17,7 +17,6 @@ test_pic = fun.GetOneFrame(packed_img,size_y,size_x,329,n_col)
 # n_cells = int(np.sqrt(h.size/9))
 # h = h.reshape((n_cells,n_cells,9))
 # h_img = fun.HOG_pic_cv2(test_pic,h)
-
 #采集正样本
 f_positive = open(home+'result/video1_pos.txt','r')
 s_pos = []
@@ -67,8 +66,31 @@ center_pos = sum(hog_pos)/hog_pos.shape[0]
 
 #计算正负样本到center的距离
 dist_pos = np.zeros((hog_pos.shape[0]))
-for hog in hog_pos:
-    dist_pos = np.sqrt((hog-center_pos)**2)
+for i in range(hog_pos.shape[0]):
+    dist_pos[i] = np.sqrt(sum((hog_pos[i]-center_pos).reshape(hog_pos[i].size)**2))
 dist_neg = np.zeros((hog_neg.shape[0]))
-for hog in hog_neg:
-    dist_neg = np.sqrt((hog-center_pos)**2)
+for i in range(hog_neg.shape[0]):
+    dist_neg[i] = np.sqrt(sum((hog_neg[i]-center_pos).reshape(hog_neg[i].size)**2))
+
+#计算并绘制ROC曲线
+dist_pos.sort()
+dist_neg.sort()
+n_samples = dist_pos.size+dist_neg.size
+i,j=(0,0)
+x,y=(0.,0.)
+xypoints = [[x,y]]
+while i != dist_pos.size-1 and j != dist_neg.size-1:
+    if dist_pos[i] <= dist_neg[j]:
+        y += 1.0 / dist_pos.size
+        i += 1
+    elif dist_pos[i] > dist_neg[j]:
+        x += 1.0 / dist_neg.size
+        j += 1
+    print("%d\t%d"%(i,j))
+    xypoints.append([x,y])
+
+xypoints = np.array(xypoints)
+plt.plot(xypoints[:,0], xypoints[:,1])
+
+
+
