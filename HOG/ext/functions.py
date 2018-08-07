@@ -8,7 +8,6 @@ Created on Sat Aug  4 14:34:26 2018
 import cv2
 from numpy import *
 import time
-import matplotlib.pyplot as plt
 
 def GaussianFilter(n):
     filter_list = zeros(n)
@@ -174,7 +173,7 @@ def HOGCalc(img,cell_width, n):
         for j in arange(1,hog.shape[1]-2):
             blk_norm = sqrt(sum(hog[i:i+2,j:j+2].reshape(4*n)**2)+eps**2)
             hog1[i:i+2,j:j+2,:] = hog[i:i+2,j:j+2,:]/blk_norm
-    return [hog[1:-1,1:-1],hog1[1:-1,1:-1]]
+    return hog1[1:-1,1:-1]
 
 def HOG_pic(img,hog):
     size_y,size_x = img.shape
