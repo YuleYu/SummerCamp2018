@@ -24,7 +24,7 @@ def InitParams(n_label,n_param):
 def PValue(w,x):
     enum = np.zeros(w.shape[0])
     for i in range(w.shape[0]):
-        enum[i] = np.exp(-np.dot(w[i],x))
+        enum[i] = np.exp(np.dot(w[i],x))
     denum = sum(enum)
     return enum/denum
 
@@ -54,14 +54,10 @@ def SftMxDLoss(w,train,label):
     return dloss / train.shape[0]
 
 
-
-def SftMxLearning(train,label,max_iter=6000,batch_size=1000,step=1,max_err=1e-4):
+def SftMxLearning(train,label,w,max_iter=6000,batch_size=1000,step=1,max_err=1e-4):
     #参数初始化
     it = 0
     err = 100
-    n_param = train[0].size+1
-    n_label = 10
-    w = InitParams(n_label,n_param)
     loss = SftMxLoss(w,train,label)
     curve = []
 
@@ -75,14 +71,14 @@ def SftMxLearning(train,label,max_iter=6000,batch_size=1000,step=1,max_err=1e-4)
         #计算下降方向
         dloss = SftMxDLoss(w,batch_train,batch_label)
         grad_mag = np.sqrt(sum(sum(dloss**2)))
-        dloss /= -grad_mag
+        dloss /= grad_mag
 
         #计算新参数值 w_new
         w_new = w - dloss * step
         loss_new = SftMxLoss(w_new,batch_train,batch_label)
         err_new = abs(loss_new - loss)
         if loss_new >= loss:
-            step *= 0.5
+            step *= 0.8
         else:
             err,loss,w=err_new,loss_new,w_new
         print("iter:%d,err:%f,step:%f,loss:%f"%(it,err,step,loss))
@@ -114,7 +110,10 @@ train = Img2Smp(train_image)
 test  = Img2Smp(test_image)
 
 
-[w,loss_curve] =SftMxLearning(train[0:60000],train_label[0:60000],max_iter=1000,step=10,max_err=1e-6)
+n_param = train[0].size+1
+n_label = 10
+w = InitParams(n_label,n_param)
+[w,loss_curve] =SftMxLearning(train[0:60000],train_label[0:60000],w,max_iter=1000,step=10,max_err=1e-6)
 x = np.append(train[10],1)
 yi = CalcLabel(w,x)
 [err_record,err_rate] = Test(w,test,test_label)
