@@ -44,9 +44,11 @@ def softmax(w, x, i, j):
 
 def miniBatchInit(batchSize, trainingSet):
     randomNum = random.sample(range(0, trainingSet), trainingSet)
+    # randomNum = np.array(randomNum)
     batchSizeNum = []
     for i in range(int(math.floor((trainingSet-1)/batchSize))):
-        batchSizeNum.append(randomNum[i*batchSize, (i+1)*batchSize-1])
+        tmp = randomNum[i*batchSize:(i+1)*batchSize-1]
+        batchSizeNum.append((tmp))
     return batchSizeNum
 
 def miniBatch(image, label, batchSizeNum):
