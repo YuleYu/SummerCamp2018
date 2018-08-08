@@ -4,11 +4,10 @@ import cv2
 import numpy as np
 import datetime
 import random
-# from HOG.ext.ReadXML import ReadXML
+from HOG.ext.ReadXML import ReadXML
 import matplotlib.pyplot as plt
 
-
-
+home = './'
 t_start,t_end,fps,n_col,size_y,size_x,packed_img = fun.ReadPackedImg('result/video1',home)
 #test_pic = fun.ShowFrame(packed_img,size_y,size_x,329,5)
 test_pic = fun.GetOneFrame(packed_img,size_y,size_x,329,n_col)

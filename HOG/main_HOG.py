@@ -10,7 +10,7 @@ import HOG.ext.ReadXML
 
 
 script_path = './script/'
-mainScript = f"{script_path}{'main_HOG.xml'}"
+mainScript = script_path+'main_HOG.xml'
 startHOGpic, endHOGpic, showMidResult, video_choice, get_region = HOG.ext.ReadXML.ReadMainXML(mainScript)
 # ========= setting ====================
 #video_choice = 'video1'
@@ -55,29 +55,29 @@ img = cv.imread(pic, 0)
 #     img_show += img[raw*size_y:raw*size_y+size_y-1, col*size_x:col*size_x+size_x-1]
 img_show = img[int(size_y) * startHOGpic:(int(size_y) * endHOGpic - 1), 0:(int(size_x) * int(colSize) - 1)]
 #hog = HOGCalc(img_show, int(bin))
-hog = HOGCalc(img, int(bin))
-hog_image = HOG_pic(img_show, hog)
-
-num_col, num_raw = img.shape
-num_col /= size_y
-num_raw /= size_x
-
-hogDic = []
-for count in range(int(num_raw) * int(num_col)):
-    raw = floor(count / colSize)
-    col = floor(count % colSize)
-    assert isinstance(size_y, object)
-    hogDic.append(hog[raw * int(size_y):raw * int(size_y) - 1, col * size_x:col * size_x + size_x - 1])
-
-# HOG picture
-if showMidResult == True:
-    plt.imshow(hog_image, cmap=plt.cm.gray)
-    plt.show()
-
-# compute the distance of HOG
-mean_value = []
-for every_img in hogDic:
-    mean_value.append(mean(every_img))
-
-
-print('over')
+# hog = HOGCalc(img, int(bin))
+# hog_image = HOG_pic(img_show, hog)
+#
+# num_col, num_raw = img.shape
+# num_col /= size_y
+# num_raw /= size_x
+#
+# hogDic = []
+# for count in range(int(num_raw) * int(num_col)):
+#     raw = floor(count / colSize)
+#     col = floor(count % colSize)
+#     assert isinstance(size_y, object)
+#     hogDic.append(hog[raw * int(size_y):raw * int(size_y) - 1, col * size_x:col * size_x + size_x - 1])
+#
+# # HOG picture
+# if showMidResult == True:
+#     plt.imshow(hog_image, cmap=plt.cm.gray)
+#     plt.show()
+#
+# # compute the distance of HOG
+# mean_value = []
+# for every_img in hogDic:
+#     mean_value.append(mean(every_img))
+#
+#
+# print('over')
