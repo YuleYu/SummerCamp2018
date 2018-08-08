@@ -1,4 +1,6 @@
+import math
 import numpy as np
+import random
 
 def softmaxLoss(w, train, k):
     loss = 0
@@ -39,3 +41,18 @@ def softmax(w, x, i, j):
     for theta in w:
         denominator += np.exp(np.dot(x[i], theta))
     return (np.exp(np.dot(x[i], w[j]))) / denominator
+
+def miniBatchInit(batchSize, trainingSet):
+    randomNum = random.sample(range(0, trainingSet), trainingSet)
+    batchSizeNum = []
+    for i in range(int(math.floor((trainingSet-1)/batchSize))):
+        batchSizeNum.append(randomNum[i*batchSize, (i+1)*batchSize-1])
+    return batchSizeNum
+
+def miniBatch(image, label, batchSizeNum):
+    image_out = []
+    label_out = []
+    for num in batchSizeNum:
+        image_out.append(image[num])
+        label_out.append(label[num])
+    return image_out, label_out

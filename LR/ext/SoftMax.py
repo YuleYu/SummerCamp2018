@@ -1,5 +1,7 @@
 import numpy as np
 import  matplotlib.pyplot as plt
+import LR.ext.LoadMnist
+import LR.ext.Functions
 
 def ShowImgLabel(i,image,label,plabel):
     plt.title("True:%d,Predicted:%d"%(label,plabel))
@@ -54,12 +56,13 @@ def SftMxLearning(train,label,max_iter=6000,batch_size=1000,step=10,max_err=1e-4
     loss = SftMxLoss(w,train,label)
     curve = []
 
+    batchSizeNum = LR.ext.Functions.miniBatchInit(batch_size, train.shape[0])
     #主循环,采用简单学习率衰减法
     while err > max_err and it < max_iter:
-        it += 1
-        batch_id = batch_size*it % train.shape[0]
-        batch_train = train[batch_id:batch_id+batch_size]
-        batch_label = label[batch_id:batch_id+batch_size]
+        # batch_id = batch_size*it % train.shape[0]
+        # batch_train = train[batch_id:batch_id+batch_size]
+        # batch_label = label[batch_id:batch_id+batch_size]
+        batch_train, batch_label = LR.ext.Functions.miniBatch(train, label, batchSizeNum[it])
 
         #计算下降方向
         dloss = SftMxDLoss(w,batch_train,batch_label)
@@ -77,6 +80,8 @@ def SftMxLearning(train,label,max_iter=6000,batch_size=1000,step=10,max_err=1e-4
         print("iter:%d,err:%f,step:%f,loss:%f"%(it,err,step,loss))
         print("err_new:%f,loss_new:%f"%(err_new,loss_new))
         curve.append(loss)
+
+        it += 1
     return [w,np.array(curve)]
 
 def Test(w,test,test_label):
@@ -94,10 +99,10 @@ def CheckError(i):
     ShowImgLabel(i,test_image,test_label[i],plabel)
 
 home = 'C:/Users/peter/Documents/GitHub/SummerCamp2018/'
-image = LoadMnistImage(home+'LR/mnist/train-images.idx3-ubyte')
-label = LoadMnistLabel(home+'LR/mnist/train-labels.idx1-ubyte')
-test_image = LoadMnistImage(home+'LR/mnist/t10k-images.idx3-ubyte')
-test_label = LoadMnistLabel(home+'LR/mnist/t10k-labels.idx1-ubyte')
+image = LR.ext.LoadMnist.LoadMnistImage(home+'LR/mnist/train-images.idx3-ubyte')
+label = LR.ext.LoadMnist.LoadMnistLabel(home+'LR/mnist/train-labels.idx1-ubyte')
+test_image = LR.ext.LoadMnist.LoadMnistImage(home+'LR/mnist/t10k-images.idx3-ubyte')
+test_label = LR.ext.LoadMnist.LoadMnistLabel(home+'LR/mnist/t10k-labels.idx1-ubyte')
 # ShowImgLabel(100,image,label)
 m = image.shape[0]
 n = image[0].size
