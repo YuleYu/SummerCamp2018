@@ -2,6 +2,17 @@ import numpy as np
 import  matplotlib.pyplot as plt
 import LR.ext.LoadMnist
 import LR.ext.Functions
+from LR.ext.LoadMnist import *
+
+def Img2Smp(image):
+    m = image.shape[0]
+    n = image[0].size
+    image1 = image.reshape(m,n)
+    data = np.zeros(image1.shape)
+    for i in range(image1.shape[0]):
+        data[i] = image1[i] / image1[i].max()
+    return data
+
 
 def ShowImgLabel(i,image,label,plabel):
     plt.title("True:%d,Predicted:%d"%(label,plabel))
@@ -46,7 +57,7 @@ def SftMxDLoss(w,train,label):
 
 
 
-def SftMxLearning(train,label,max_iter=6000,batch_size=1000,step=10,max_err=1e-4):
+def SftMxLearning(train,label,max_iter=6000,batch_size=1000,step=1,max_err=1e-4):
     #参数初始化
     it = 0
     err = 100
@@ -71,10 +82,10 @@ def SftMxLearning(train,label,max_iter=6000,batch_size=1000,step=10,max_err=1e-4
 
         #计算新参数值 w_new
         w_new = w - dloss * step
-        loss_new = SftMxLoss(w_new,train,label)
+        loss_new = SftMxLoss(w_new,batch_train,batch_label)
         err_new = abs(loss_new - loss)
         if loss_new >= loss:
-            step *= 0.8
+            step *= 0.5
         else:
             err,loss,w=err_new,loss_new,w_new
         print("iter:%d,err:%f,step:%f,loss:%f"%(it,err,step,loss))
@@ -103,22 +114,16 @@ image = LR.ext.LoadMnist.LoadMnistImage(home+'LR/mnist/train-images.idx3-ubyte')
 label = LR.ext.LoadMnist.LoadMnistLabel(home+'LR/mnist/train-labels.idx1-ubyte')
 test_image = LR.ext.LoadMnist.LoadMnistImage(home+'LR/mnist/t10k-images.idx3-ubyte')
 test_label = LR.ext.LoadMnist.LoadMnistLabel(home+'LR/mnist/t10k-labels.idx1-ubyte')
+train_image = LoadMnistImage(home+'LR/mnist/train-images.idx3-ubyte')
+train_label = LoadMnistLabel(home+'LR/mnist/train-labels.idx1-ubyte')
+test_image = LoadMnistImage(home+'LR/mnist/t10k-images.idx3-ubyte')
+test_label = LoadMnistLabel(home+'LR/mnist/t10k-labels.idx1-ubyte')
 # ShowImgLabel(100,image,label)
-m = image.shape[0]
-n = image[0].size
-image1 = image.reshape(m,n)
-train = np.zeros(image1.shape)
-for i in range(image1.shape[0]):
-    train[i] = image1[i] / image1[i].max()
+train = Img2Smp(train_image)
+test  = Img2Smp(test_image)
 
-m = test_image.shape[0]
-n = test_image[0].size
-test_image1 = test_image.reshape(m,n)
-test = np.zeros(test_image1.shape)
-for i in range(test_image1.shape[0]):
-    test[i] = test_image1[i] / test_image1[i].max()
 
-[w,loss_curve] =SftMxLearning(train[0:10000],label[0:10000])
+[w,loss_curve] =SftMxLearning(train[0:60000],train_label[0:60000],max_iter=1000,step=10,max_err=1e-6)
 x = np.append(train[10],1)
 yi = CalcLabel(w,x)
 [err_record,err_rate] = Test(w,test,test_label)

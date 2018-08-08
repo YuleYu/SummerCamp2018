@@ -6,8 +6,9 @@ import datetime
 import random
 from HOG.ext.ReadXML import ReadXML
 import matplotlib.pyplot as plt
+import os
 
-home = './'
+home = 'C:/Users/peter/Documents/GitHub/SummerCamp2018/HOG/'
 t_start,t_end,fps,n_col,size_y,size_x,packed_img = fun.ReadPackedImg('result/video1',home)
 #test_pic = fun.ShowFrame(packed_img,size_y,size_x,329,5)
 test_pic = fun.GetOneFrame(packed_img,size_y,size_x,329,n_col)
@@ -160,7 +161,7 @@ def LRLearning(train):
         grad_direct /= -grad_mag
 
         #计算新参数值 w_new
-        w_new = grad_direct * step
+        w_new = w + grad_direct * step
         loss_new = LRLoss(w_new,train)
         err_new = abs(loss_new - loss)
         if loss_new >= loss:
@@ -171,7 +172,7 @@ def LRLearning(train):
         curve.append(loss)
     return w
 
-def LRTest(w,test):
+def LRTest(w,test,fun=np.log10):
     roc_dots = []
     for sample in test:
         y = sample[1]
@@ -192,10 +193,11 @@ def LRTest(w,test):
             y += 1.0 / n_neg
         roc_curve.append([x,y])
     roc_curve = np.array(roc_curve)
-    plt.plot(np.log10(roc_curve[:,0]),roc_curve[:,1])
+    plt.plot(fun(roc_curve[:,0]),roc_curve[:,1])
     return roc_curve
 
 
 w = LRLearning(train)
+LRTest(w,test,fun=(lambda x: x))
 LRTest(w,test)
 
