@@ -199,13 +199,15 @@ def HOG_pic(img,hog):
                 angle += angle_gap
     return hog_image
 
-def HOG_pic_cv2(img,hog):
-    # size_y,size_x = img.shape
+def HOG_pic_cv2(img,hog,shape):
+    size_y,size_x = img.shape
     cell_size = 32
     cell_width = cell_size/2
-    #max_mag = hog.max()
-    max_mag =1
-    hog_image = zeros([hog.shape[0]*cell_size,hog.shape[1]*cell_size])
+    hog = hog.reshape(shape)
+    max_mag = hog.max()
+    img_shape = (hog.shape[0]*cell_size,hog.shape[1]*cell_size)
+    hog_image = cv2.resize(img,img_shape,interpolation=cv2.INTER_NEAREST)
+    # hog_image = zeros([hog.shape[0]*cell_size,hog.shape[1]*cell_size])
     for x in range(hog.shape[0]):
         for y in range(hog.shape[1]):
             cell_grad = hog[x][y]
@@ -221,9 +223,9 @@ def HOG_pic_cv2(img,hog):
                 cv2.line(hog_image,(y1,x1),(y2,x2),int(255*math.sqrt(magnitude)))
                 angle += angle_gap
     return hog_image
-def ReadPackedImg(fname,home):
-    fppc = open(home+fname+'.ppc','r')
-    fpng = (home+fname+'.png')
+def ReadPackedImg(fname):
+    fppc = open(fname+'.ppc','r')
+    fpng = (fname+'.png')
     packed_img = cv2.imread(fpng,0)
     t_start,t_end = list(map(int,fppc.readline().split()))
     fps = int(fppc.readline())
@@ -248,7 +250,6 @@ def CheckBalls(fname):
     crit = CalcCriterion(t_start,t_end,fps,n_col,size_y,size_x,packed_img)
     data = Convolution(crit,3)-Convolution(crit,13)
     locations = LocateCandidatesByF(data,-2000,50,5)
-    result = []
     for entry in locations:
         tmp_img=ShowFrame(packed_img,size_y,size_x,entry[0],entry[2])
         #print(entry)

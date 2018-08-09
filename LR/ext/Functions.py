@@ -125,63 +125,106 @@ def InitParams(n_param):
 def LRPredict(x,w):
     return 1.0 / (1 + np.exp(-np.dot(x,w)))
 
-def LRLoss(w,train):
+def ZeroOneLoss(w,train,label):
     loss = 0
-    for sample in train:
-        #sample: [0]为帧数,[1]为类别标签,[2]~[end]为hog向量
-        y = sample[1]
-        x = sample[2:sample.size]
+    for i in range(train.shape[0]):
+        y = label[i]
+        x = train[i]
+        if np.dot(x,w[0:-1])+w[-1] > 0:
+            y_p = 1
+        else:
+            y_p = 0
+        loss += 1 if y != y_p else 0
+    return  loss / train.shape[0]
+
+def LRLoss(w,train,label):
+    loss = 0
+    for i in range(train.shape[0]):
+        y = label[i]
+        x = train[i]
         x = np.append(x,1)
         h = LRPredict(x,w)
         loss -= y*np.log(h)+(1-y)*np.log(1-h)
     return  loss / train.shape[0]
 
-def LRDLoss(w,train,lam=1):
+def LRDLoss(w,train,label,lam=1):
     d_loss = np.zeros(train.shape[1]-1)
-    for sample in train:
-        y = sample[1]
-        x = sample[2:sample.size]
+    for i in range(train.shape[0]):
+        y = label[i]
+        x = train[i]
         x = np.append(x,1)
         h = LRPredict(x,w)
         d_loss -= (y-h)*x
     return d_loss / train.shape[0] + lam * w
 
 #LR学习主程序
-def LRLearning(train):
+def LRLearning(train,label,validate,valabel,n_epoch,batchsize,learningrate,patience,lam):
+    #仿照ppt中代码,加入minibatch,earlystop
 
     #参数初始化
-    max_iter = 1000
-    it = 0
+    epoch = 0
     max_err = 1.e-4
     err = 1000
-    step = 1.0
+    validation_frequency = 100
     n_param = train.shape[1]-1
+    n_batch = int(np.floor(train.shape[0]/batchsize))
     w = -InitParams(n_param)
     loss = LRLoss(w,train)
+    best_validation_loss = 1
     curve = []
+    done_looping = False
+    batch_pool = miniBatchInit(batchsize,train)
+    improvement_threshold = 0.8
+    patience_increase = 1.2
+    while epoch < n_epoch and (not done_looping):
+        epoch += 1
+        for batch_id in range(batch_pool.shape[0]):
+            minibatch_id = batch_pool[batch_id]
+            batch = train[minibatch_id]
+            batch_label = label[minibatch_id]
+            loss = LRLoss(w,batch,batch_label)
+            dloss = LRDLoss(w,batch,batch_label)
+            w -= dloss * learningrate
 
-    #主循环,采用简单学习率衰减法
-    while err > max_err and it < max_iter:
-        it += 1
+            iter = (epoch-1)*batch_pool.shape[0] + batch_id
+            if (iter+1) % validation_frequency == 0:
+                this_validation_loss = ZeroOneLoss(w,validate,valabel)
+                if this_validation_loss < best_validation_loss:
+                    if this_validation_loss < best_validation_loss * improvement_threshold:
+                        patience = max(patience, iter * patience_increase)
+                    best_validation_loss = this_validation_loss
+                if patience <= iter:
+                    done_looping = True
+                    break
+                if best_validation_loss < 1e-5:
+                    break
 
-        #计算下降方向
-        grad_direct = LRDLoss(w,train)
-        grad_mag = np.sqrt(sum(grad_direct**2))
-        grad_direct /= -grad_mag
 
-        #计算新参数值 w_new
-        w_new = w + grad_direct * step
-        loss_new = LRLoss(w_new,train)
-        err_new = abs(loss_new - loss)
-        if loss_new >= loss:
-            step *= 0.8
-        else:
-            err,loss,w=err_new,loss_new,w_new
-        print("err:%f,step:%f,loss:%f"%(err,step,loss))
-        curve.append(loss)
+
+
+
+    # #主循环,采用简单学习率衰减法
+    # while err > max_err and it < max_iter:
+    #     it += 1
+    #
+    #     #计算下降方向
+    #     grad_direct = LRDLoss(w,train)
+    #     grad_mag = np.sqrt(sum(grad_direct**2))
+    #     grad_direct /= -grad_mag
+    #
+    #     #计算新参数值 w_new
+    #     w_new = w + grad_direct * step
+    #     loss_new = LRLoss(w_new,train)
+    #     err_new = abs(loss_new - loss)
+    #     if loss_new >= loss:
+    #         step *= 0.8
+    #     else:
+    #         err,loss,w=err_new,loss_new,w_new
+    #     print("err:%f,step:%f,loss:%f"%(err,step,loss))
+    #     curve.append(loss)
     return [w,curve]
 
-def LRTest(w,test,fun=np.log10):
+def LRROC(w,test):
     roc_dots = []
     for sample in test:
         y = sample[1]
@@ -204,6 +247,7 @@ def LRTest(w,test,fun=np.log10):
     roc_curve = np.array(roc_curve)
     # plt.plot(fun(roc_curve[:,0]),roc_curve[:,1])
     plt.xlim(1e-4,1)
-    plt.semilogx(fun(roc_curve[:,0]),roc_curve[:,1])
+    plt.semilogx((roc_curve[:,0]),roc_curve[:,1])
     return roc_curve
+
 

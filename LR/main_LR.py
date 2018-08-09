@@ -1,23 +1,29 @@
-import HOG.ext.test
+import HOG.ext.hog_compute as hg_cpt
+import HOG.ext.sampling as sampling
+import HOG.ext.ReadXML
 import LR.ext.LoadMnist
+from LR.ext.Functions import *
 import numpy as np
 
-path = []
-path.append('./mnist/t10k-images.idx3-ubyte')   # path[0]
-path.append('./mnist/t10k-labels.idx1-ubyte')   # path[1]
-path.append('./mnist/train-images.idx3-ubyte')  # path[2]
-path.append('./mnist/train-labels.idx1-ubyte')  # path[3]
+#此文件为Logistic Regression Classifier 主函数,
+# 将原先的mnist相关代码转移到了LR/main_MNIST中
 
-train_image = LR.ext.LoadMnist.LoadMnistImage(path[2])
-train_label = LR.ext.LoadMnist.LoadMnistLabel(path[3])
-test_image = LR.ext.LoadMnist.LoadMnistImage(path[0])
-test_label = LR.ext.LoadMnist.LoadMnistLabel(path[1])
+home = 'C:/Users/peter/Documents/GitHub/SummerCamp2018/'
+videochoice = "video1"
+fname = home+'HOG/result/'+videochoice
+imgPath, size_x, size_y, startTime, endTime, colSize, fps, bin = HOG.ext.ReadXML.ReadXML(home+'HOG/script/'+videochoice+'.xml')
+n_frames = (endTime - startTime) * fps
 
-train_image = np.reshape(train_image, [train_image.shape[0], train_image.shape[1]*train_image.shape[2]])
-train_data = np.append(train_label, train_image, axis=1)
+# 加载HOG,并用HoldOut留出法划分测试集训练集
+h = hg_cpt.LoadHOG(fname)
+label = sampling.GenLabel(fname,n_frames)
+train_id, test_id = sampling.HoldOut(n_frames)
+x_train = h[train_id]
+y_train = label[train_id]
+x_test = h[test_id]
+y_test = label[test_id]
 
-test_image = np.reshape(test_image, [test_image.shape[0], test_image[1]*test_image[2]])
-test_data = np.append(test_label, test_image, axis=1)
+#进行LR分类器训练
+# w = LRLearning(x_train,y_train,x_test,y_test)
 
-w = HOG.ext.test.LRLearning(train_image)
-HOG.ext.test.LRTest(w, test_image)
+
