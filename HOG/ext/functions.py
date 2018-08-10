@@ -6,6 +6,7 @@ Created on Sat Aug  4 14:34:26 2018
 """
 
 import cv2
+import datetime
 from numpy import *
 import time
 
@@ -223,6 +224,7 @@ def HOG_pic_cv2(img,hog,shape):
                 cv2.line(hog_image,(y1,x1),(y2,x2),int(255*math.sqrt(magnitude)))
                 angle += angle_gap
     return hog_image
+
 def ReadPackedImg(fname):
     fppc = open(fname+'.ppc','r')
     fpng = (fname+'.png')
@@ -258,8 +260,23 @@ def CheckBalls(fname):
         #result.append([entry[0],isScore])
     return locations
 
-
 def GetOneFrame(pkg_img, Y, X, n, n_col):
     row_id = int(n/n_col)
     col_id = int(n%n_col)
     return pkg_img[row_id*Y:(row_id+1)*Y,col_id*X:(col_id+1)*X]
+
+def CalcSample(s, y):
+    # 计算样本的hog,正样本y=1,负样本y=0
+    hog_list = []
+    start_time = datetime.datetime.now()
+    for (i, pic) in s:
+        hog = np.array(HOGCalc(pic, 8, 9))
+        sample = np.zeros((hog.size + 2))
+        sample[0] = i
+        sample[1] = y
+        sample[2:hog.size + 2] = hog.reshape(hog.size)
+        hog_list.append(sample)
+    end_time = datetime.datetime.now()
+    print((end_time - start_time).seconds)
+    hog_list = np.array(hog_list)
+    return hog_list

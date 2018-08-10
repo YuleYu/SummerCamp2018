@@ -24,6 +24,7 @@ def LoadHOG(fvideo):
     h = pickle.load(fhog)
     return h
 
+# unfinished
 def CalHOG_yh(imgPath, size_x, size_y, startTime, endTime, colSize, fps, bin):
     block_size = 16
     block_stride = 8

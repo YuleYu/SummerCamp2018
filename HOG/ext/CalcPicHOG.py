@@ -1,5 +1,4 @@
 from HOG.ext import functions as fun
-from HOG.ext import functions_jiang as fun_j
 import cv2
 import numpy as np
 import datetime

@@ -4,6 +4,7 @@ import datetime
 import random
 import matplotlib.pyplot as plt
 import os
+import HOG.ext.functions as func
 from LR.ext.Functions import *
 
 home = 'C:/Users/peter/Documents/GitHub/SummerCamp2018/HOG/'
@@ -11,6 +12,7 @@ t_start,t_end,fps,n_col,size_y,size_x,packed_img = fun.ReadPackedImg('result/vid
 test_pic = fun.GetOneFrame(packed_img,size_y,size_x,329,n_col)
 # print ("Time of cv2 hog: %d:"% (t_end-t_start).seconds)
 # h_img = fun.HOG_pic_cv2(test_pic,h)
+
 #采集正样本
 
 f_positive = open(home+'result/video1_pos.txt','r')
@@ -21,7 +23,7 @@ for entry in f_positive:
         s_pos.append((i,fun.GetOneFrame(packed_img,size_y,size_x,i,n_col)))
 f_positive.close()
 
-hog_pos = CalcSample(s_pos,1)
+hog_pos = func.CalcSample(s_pos,1)
 
 #提取负样本,暂定从f_beg向后取5~50内的帧,可形成405~4050个大小的负样本集合
 #用neg_per_shot控制一次假进球帧后面采集多少负样本,neg_per_shot越大,静止帧数越多
@@ -37,7 +39,7 @@ total_neg = len(s_neg)
 print(total_neg)
 
 
-hog_neg = CalcSample(s_neg,0)
+hog_neg = func.CalcSample(s_neg,0)
 
 #计算正样本中心center_pos
 center_pos = sum(hog_pos)/hog_pos.shape[0]
