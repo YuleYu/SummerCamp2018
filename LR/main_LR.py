@@ -25,15 +25,17 @@ x_test = h[test_id]
 y_test = label[test_id]
 
 #进行LR分类器训练
-batchsize = 200
-learning_rate = 1e-2
-patience = 100
-lam = 0.
-nepoch = 3
+batchsize = 10000
+learning_rate = 0.2
+patience = 314
+lam = 0.0001
+nepoch = 200
 val_freq = 1
 w = np.zeros(x_train.shape[1]+1)
+learning_rate *= 0.8
+learning_rate /= 0.8
 [w,curve]=lr.LRLearning(w, x_train, y_train, x_test, y_test, nepoch, batchsize, learning_rate, patience, lam, val_freq)
-plt.plot(curve[:,0],curve[:,1])
+plt.plot(curve[:,0],curve[:,1],'c*--')
 
-err = lr.ZeroOneLoss(w,x_train,y_train)
+err = lr.ZeroOneLoss(w,x_train,y_train,)
 

@@ -128,42 +128,35 @@ def BuildSet(hog_pos, hog_neg, proportion=0.77):
 
 # GenROC(dist_pos,dist_neg)
 def InitParams(n_param):
-    return np.random.rand(n_param)/n_param
+    return np.random.rand(n_param) / n_param
 
 
 # Logistic Regression 相关函数
-def LRPredict(x, w):
-    return 1.0 / (1 + np.exp(-np.dot(x, w[0:-1]) - w[-1]))
+# def LRPredict(x, w):
+#     return 1.0 / (1 + np.exp(-np.dot(x, w[0:-1]) - w[-1]))
 
 
 def ZeroOneLoss(w, train, label):
-    y_p = np.dot(train,w[0:-1]) + w[-1] >0
+    y_p = np.dot(train, w[0:-1]) + w[-1] > 0
     return sum(y_p != label) / train.shape[0]
 
 
 def LRLoss(w, train, label, lam=0.5):
-    loss = 0
-    for i in range(train.shape[0]):
-        y = label[i]
-        x = train[i]
-        h = LRPredict(x, w)
-        loss -= y * np.log(h) + (1 - y) * np.log(1 - h)
-    return loss / train.shape[0] + 0.5 * lam * np.dot(w, w)
+    h = 1.0 / (1 + np.exp(-np.dot(train, w[0:-1]) - w[-1]))
+    return -sum(label * np.log(h) + (1 - label) * np.log(1 - h)) / train.shape[0] + 0.5 * lam * np.dot(w, w)
 
 
 def LRDLoss(w, train, label, lam=0.5):
     d_loss = np.zeros(w.shape[0])
-    for i in range(train.shape[0]):
-        y = label[i]
-        x = train[i]
-        h = LRPredict(x, w)
-        d_loss[0:-1] -= (y - h) * x
-        d_loss[-1] -= (y - h)
+    h = 1.0 / (1 + np.exp((-np.dot(train, w[0:-1]) - w[-1])))
+    d_loss[0:-1] -= np.dot(train.T,label-h)
+    d_loss[-1]   -= sum(label - h)
     return d_loss / train.shape[0] + lam * w
 
 
 # LR学习主程序
-def LRLearning(w, train, label, validate, valabel, n_epoch, batchsize, learning_rate, patience, lam, validation_frequency):
+def LRLearning(w, train, label, validate, valabel, n_epoch, batchsize, learning_rate, patience, lam,
+               validation_frequency):
     # 仿照ppt中代码,加入minibatch,earlystop
 
     # 参数初始化
@@ -180,31 +173,48 @@ def LRLearning(w, train, label, validate, valabel, n_epoch, batchsize, learning_
     curve = []
     done_looping = False
     batch_pool = miniBatchInit(batchsize, train.shape[0])
+    n_pos = sum(label==1)
+    rescal = (label.shape[0]-n_pos) / n_pos
 
-    #主循环
+    # 主循环
     while epoch < n_epoch and (not done_looping):
         epoch += 1
         for batch_id in range(batch_pool.shape[0]):
             minibatch_id = batch_pool[batch_id]
+
             batch = train[minibatch_id]
             batch_label = label[minibatch_id]
+
+            n_neg = sum(batch_label != 1)
+            n_pos = sum(batch_label)
+            batch_id_neg = np.arange(batchsize)[batch_label!=1] #batch_id_neg为 batch中所有负样本的下标
+            resample_id = batch_id_neg[random.sample(range(n_neg),int(n_neg * 0.02))] #batch_id_neg 中留下样本的下标
+            re_id = batch_label == 1 #最终留下样本的mask,正样本全部留下
+            re_id[resample_id] = True #负样本留下的部分的mask
+            n_final = sum(re_id)
+            new_batch = batch[re_id]
+            new_label = batch_label[re_id]
             # loss = LRLoss(w, batch, batch_label)
-            dloss = LRDLoss(w, batch, batch_label, lam)
+            # dloss = LRDLoss(w, new_batch, new_label, lam)
+            dloss = LRDLoss(w, train, label, lam)
             dloss /= np.sqrt(np.dot(dloss, dloss))
             w -= dloss * learning_rate
 
             iter = (epoch - 1) * batch_pool.shape[0] + batch_id
             if (iter + 1) % validation_frequency == 0:
-                trainloss = LRLoss(w, batch, batch_label, lam)
-                print('epoch: %i, minibatch: %i/%i, iter: %i, patience: %d, training loss: %f validation error %f %%' % (
-                    epoch,
-                    batch_id+1,
-                    batch_pool.shape[0],
-                    iter,
-                    patience,
-                    trainloss,
-                    this_validation_loss*100))
-                curve.append([iter,trainloss])
+                # trainloss = LRLoss(w, batch, batch_label, lam)
+                trainloss = LRLoss(w, train, label, lam)
+                print( 'epoch: %i, minibatch: %i/%i, iter: %i, n_pos: %d, n_final: %d, patience: %d, training loss: %f validation error %f %%' % (
+                        epoch,
+                        batch_id + 1,
+                        batch_pool.shape[0],
+                        iter,
+                        n_pos,
+                        n_final,
+                        patience,
+                        trainloss,
+                        this_validation_loss * 100))
+                curve.append([iter, trainloss])
                 this_validation_loss = ZeroOneLoss(w, validate, valabel)
                 if this_validation_loss < best_validation_loss:
                     if this_validation_loss < best_validation_loss * improvement_threshold:
