@@ -185,18 +185,9 @@ def LRLearning(w, train, label, validate, valabel, n_epoch, batchsize, learning_
             batch = train[minibatch_id]
             batch_label = label[minibatch_id]
 
-            n_neg = sum(batch_label != 1)
-            n_pos = sum(batch_label)
-            batch_id_neg = np.arange(batchsize)[batch_label!=1] #batch_id_neg为 batch中所有负样本的下标
-            resample_id = batch_id_neg[random.sample(range(n_neg),int(n_neg * 0.02))] #batch_id_neg 中留下样本的下标
-            re_id = batch_label == 1 #最终留下样本的mask,正样本全部留下
-            re_id[resample_id] = True #负样本留下的部分的mask
-            n_final = sum(re_id)
-            new_batch = batch[re_id]
-            new_label = batch_label[re_id]
             # loss = LRLoss(w, batch, batch_label)
-            # dloss = LRDLoss(w, new_batch, new_label, lam)
-            dloss = LRDLoss(w, train, label, lam)
+            dloss = LRDLoss(w, batch, batch_label, lam)
+            # dloss = LRDLoss(w, train, label, lam)
             dloss /= np.sqrt(np.dot(dloss, dloss))
             w -= dloss * learning_rate
 
@@ -204,13 +195,11 @@ def LRLearning(w, train, label, validate, valabel, n_epoch, batchsize, learning_
             if (iter + 1) % validation_frequency == 0:
                 # trainloss = LRLoss(w, batch, batch_label, lam)
                 trainloss = LRLoss(w, train, label, lam)
-                print( 'epoch: %i, minibatch: %i/%i, iter: %i, n_pos: %d, n_final: %d, patience: %d, training loss: %f validation error %f %%' % (
+                print( 'epoch: %i, minibatch: %i/%i, iter: %i, patience: %d, training loss: %f validation error %f %%' % (
                         epoch,
                         batch_id + 1,
                         batch_pool.shape[0],
                         iter,
-                        n_pos,
-                        n_final,
                         patience,
                         trainloss,
                         this_validation_loss * 100))
@@ -249,28 +238,24 @@ def LRLearning(w, train, label, validate, valabel, n_epoch, batchsize, learning_
     return [w, curve]
 
 
-def LRROC(w, test):
-    roc_dots = []
-    for sample in test:
-        y = sample[1]
-        x = sample[2:sample.size]
-        x = np.append(x, 1)
-        value = np.dot(w, x)
-        roc_dots.append([sample[0], y, value])
-    roc_dots = np.array(roc_dots)
+def LRROC(w, test, label):
+    roc_dots = np.zeros((label.shape[0],2))
+    roc_dots[:,-1] = np.dot(test,w[0:-1])+w[-1]
+    roc_dots[:,0] = label
+
     roc_dots = roc_dots[np.lexsort(roc_dots.T)]
-    (x, y) = (0, 0)
-    roc_curve = [[x, y]]
-    n_pos = sum(test[:, 1])
+    (x, y) = (1, 1)
+    roc_curve = [[x,y]]
+    n_pos = sum(label)
     n_neg = test.shape[0] - n_pos
     for elem in roc_dots:
-        if elem[1] == 1:
-            x += 1.0 / n_pos
-        elif elem[1] == 0:
-            y += 1.0 / n_neg
+        if elem[0] == 1:
+            y -= 1.0 / n_pos
+        elif elem[0] == 0:
+            x -= 1.0 / n_neg
         roc_curve.append([x, y])
     roc_curve = np.array(roc_curve)
     # plt.plot(fun(roc_curve[:,0]),roc_curve[:,1])
-    plt.xlim(1e-4, 1)
-    plt.semilogx((roc_curve[:, 0]), roc_curve[:, 1])
+    plt.xlim(1e-5, 1e-1)
+    plt.semilogx((roc_curve[:, 0]), roc_curve[:, 1],'r*--')
     return roc_curve

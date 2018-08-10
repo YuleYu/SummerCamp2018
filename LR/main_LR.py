@@ -3,6 +3,7 @@ import HOG.ext.sampling as sampling
 import HOG.ext.ReadXML
 import LR.ext.LoadMnist
 import LR.ext.Functions as lr
+import  pickle
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -25,17 +26,19 @@ x_test = h[test_id]
 y_test = label[test_id]
 
 #进行LR分类器训练
-batchsize = 10000
-learning_rate = 0.2
+batchsize = 31499
+learning_rate = 0.4
 patience = 314
-lam = 0.0001
-nepoch = 200
+lam = 0.0000
+nepoch = 50
 val_freq = 1
 w = np.zeros(x_train.shape[1]+1)
-learning_rate *= 0.8
-learning_rate /= 0.8
+learning_rate *= 0.618
+learning_rate /= 0.618
 [w,curve]=lr.LRLearning(w, x_train, y_train, x_test, y_test, nepoch, batchsize, learning_rate, patience, lam, val_freq)
-plt.plot(curve[:,0],curve[:,1],'c*--')
+plt.plot(curve[:,0],curve[:,1],'r*--')
 
-err = lr.ZeroOneLoss(w,x_train,y_train,)
-
+curve2= lr.LRROC(w,x_test,y_test )
+# fresult_video1=open('result.txt','wb+')
+# pickle.dump(w,fresult_video1)
+# fresult_video1.close()
