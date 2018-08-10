@@ -24,3 +24,13 @@ def LoadHOG(fvideo):
     h = pickle.load(fhog)
     return h
 
+def CalHOG_yh(imgPath, size_x, size_y, startTime, endTime, colSize, fps, bin):
+    block_size = 16
+    block_stride = 8
+    cell_size = 8
+    hogDes = cv2.HOGDescriptor((size_y, size_x), (block_size, block_size), (block_stride,block_stride), (cell_size,cell_size), bin)
+    fhog = open(imgPath, 'wb')
+    nframe = int(endTime - startTime) * fps
+    hog_size = (size_y / cell_size - 1) * (size_x / 8 - 1) * (block_size / cell_size)**2 * bin
+    for i in range(nframe):
+        pic = GetOneFrame()
