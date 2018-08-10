@@ -2,8 +2,9 @@ import HOG.ext.hog_compute as hg_cpt
 import HOG.ext.sampling as sampling
 import HOG.ext.ReadXML
 import LR.ext.LoadMnist
-from LR.ext.Functions import *
+import LR.ext.Functions as lr
 import numpy as np
+import matplotlib.pyplot as plt
 
 #此文件为Logistic Regression Classifier 主函数,
 # 将原先的mnist相关代码转移到了LR/main_MNIST中
@@ -24,6 +25,15 @@ x_test = h[test_id]
 y_test = label[test_id]
 
 #进行LR分类器训练
-# w = LRLearning(x_train,y_train,x_test,y_test)
+batchsize = 200
+learning_rate = 1e-2
+patience = 100
+lam = 0.
+nepoch = 3
+val_freq = 1
+w = np.zeros(x_train.shape[1]+1)
+[w,curve]=lr.LRLearning(w, x_train, y_train, x_test, y_test, nepoch, batchsize, learning_rate, patience, lam, val_freq)
+plt.plot(curve[:,0],curve[:,1])
 
+err = lr.ZeroOneLoss(w,x_train,y_train)
 

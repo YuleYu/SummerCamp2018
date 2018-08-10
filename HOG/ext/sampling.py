@@ -21,7 +21,7 @@ def GenLabel(fname,nframes,winsize=1):
     return label
 
 def HoldOut(n,ratio_train=0.7):
-    reorder = random.sample(n,n)
+    reorder = random.sample(range(n),n)
     n_train = int(np.floor(n*ratio_train))
     train_id = copy.deepcopy(reorder[0:n_train])
     train_id.sort()
