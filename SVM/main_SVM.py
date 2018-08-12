@@ -7,21 +7,26 @@ from pylab import mpl
 # mpl.rcParams['font.sans-serif'] = ['SimHei']
 
 from HOG.ext.hog_compute import CalcHOG, LoadHOG
+from HOG.ext.sampling import GenLabel
+from HOG.ext.ReadXML import ReadXML
 
+script_path = '../HOG/script/video1.xml'
+img_path, size_x, size_y, t_start, t_end, n_col, fps, bin = ReadXML(script_path)
 # np.random.seed(1)
 # tf.set_random_seed(1)
 
 sess=tf.Session()
-#产生数据
+# 产生数据
 # iris=datasets.load_iris()
 # x_vals=iris.data
 # y_vals=np.array([1 if y==0 else -1 for y in iris.target])
 
-path = '../HOG/pic/video1'
-CalcHOG(path)
+path = '../HOG/script/video1'
+labelPath = '../HOG/result/video1'
+# CalcHOG(path)
 data = LoadHOG(path)
 x_vals = data
-y_vals = 1
+y_vals = GenLabel(labelPath, (t_end-t_start)*fps)
 
 #划分数据为训练集和测试集
 train_indices = np.random.choice(len(x_vals),round(len(x_vals)*0.8), replace=False)
@@ -32,9 +37,9 @@ y_vals_train = y_vals[train_indices]
 y_vals_test = y_vals[test_indices]
 #批训练中批的大小
 batch_size = 100
-x_data = tf.placeholder(shape=[None, 4], dtype=tf.float32)
+x_data = tf.placeholder(shape=[None, 900], dtype=tf.float32)
 y_target = tf.placeholder(shape=[None, 1], dtype=tf.float32)
-W = tf.Variable(tf.random_normal(shape=[4,1]))
+W = tf.Variable(tf.random_normal(shape=[900,1]))
 b = tf.Variable(tf.random_normal(shape=[1,1]))
 #定义损失函数
 model_output=tf.matmul(x_data,W)+b
@@ -65,7 +70,9 @@ for i in range(200):
     test_acc_temp = sess.run(accuracy, feed_dict={x_data: x_vals_test, y_target: np.transpose([y_vals_test])})
     test_accuracy.append(test_acc_temp)
     if (i+1)%100==0:
-        print('Step #' + str(i+1) + ' W = ' + str(sess.run(W)) + 'b = ' + str(sess.run(b)))
+        print('Step #' + str(i+1))
+        #print(' W = ' + str(sess.run(W)))
+        # print('b = ' + str(sess.run(b))))
         print('Loss = ' + str(test_acc_temp))
 plt.plot(loss_vec)
 plt.plot(train_accuracy)

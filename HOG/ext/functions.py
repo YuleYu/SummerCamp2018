@@ -9,6 +9,7 @@ import cv2
 import datetime
 from numpy import *
 import time
+import HOG.ext.ReadXML as readXML
 
 def GaussianFilter(n):
     filter_list = zeros(n)
@@ -226,13 +227,8 @@ def HOG_pic_cv2(img,hog,shape):
     return hog_image
 
 def ReadPackedImg(fname):
-    fppc = open(fname+'.ppc','r')
-    fpng = (fname+'.png')
-    packed_img = cv2.imread(fpng,0)
-    t_start,t_end = list(map(int,fppc.readline().split()))
-    fps = int(fppc.readline())
-    size_x,size_y = list(map(int,fppc.readline().split()))
-    n_col = int(fppc.readline())
+    img_path, size_x, size_y, t_start, t_end, n_col, fps, bin = readXML.ReadXML(fname)
+    packed_img = cv2.imread(img_path, 0)
     return [t_start,t_end,fps,n_col,size_y,size_x,packed_img]
     
 def ShowFrame(packed_img,size_y,size_x,n,lag):
