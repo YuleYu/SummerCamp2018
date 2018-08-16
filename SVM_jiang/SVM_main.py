@@ -5,7 +5,11 @@ import HOG.ext.sampling as sampling
 import HOG.ext.ReadXML
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 import profile
+import pickle
+import SVM_jiang.ext.SVM_Classifier as classifier
+import LR.ext.Tester as tester
 
 home = 'C:/Users/peter/Documents/GitHub/SummerCamp2018/'
 videochoice = "video1"
@@ -23,49 +27,46 @@ x_test = h[test_id]
 y_test = label[test_id]
 
 y_svm = list(y_train)
-id = np.arange(h.shape[1])
 x_svm = [dict(zip(np.arange(x_train.shape[1]),x_train[i])) for i in np.arange(x_train.shape[0])]
-profile.run('x_svm = list(dict(zip(np.arange(x_train.shape[1]),x_train[i])) for i in np.arange(x_train.shape[0]))')
-m = svmutil.svm_train(y_svm,x_svm,'-c 0.5 -t 2 -g 1 -b 1')
-profile.run("m = svmutil.svm_train(y_svm,x_svm,'-c 0.5 -t 2 -g 1 -b 1')")
-svmutil.svm_save_model('c_05_gamma_1.model',m)
 y_svm_test = list(y_test)
 x_svm_test = list(dict(zip(np.arange(x_test.shape[1]),x_test[i])) for i in np.arange(x_test.shape[0]))
 
-pre_label, acc, dec = svmutil.svm_predict(y_svm_test,x_svm_test,m, '-b 1')
-dec_ar = np.array(dec)
-order = np.lexsort([dec_ar[:,1]])
-x_p,y_p = (1,1)
-n_pos = sum(y_test)
-n_neg = y_test.shape[0] - n_pos
-curve1 = []
-for i in order:
-    if y_test[i] == 1:
-        y_p -= 1 / n_pos
+#对C测试
+def c_value_fun(c):
+    fmodel = 'c_{c:.2f}_g_{g:.2f}.model'.format(c=c,g=1)
+    if os.path.exists(fname):
+        m = svmutil.svm_load_model(fmodel)
     else:
-        x_p -= 1 / n_neg
-    curve1.append([x_p,y_p])
-curve1 = np.array(curve1)
-# plt.plot(curve1[:,0],curve1[:,1])
+        opt_str = '-c {c} -t 2 -g {g} -b 1'.format(c = c, g = 1)
+        m = svmutil.svm_train(y_svm,x_svm,opt_str)
+    clsfr = classifier.SVM_Classifier(m)
+    clsfr.SaveModel(fmodel)
+    roc_curve=clsfr.CalROC(x_svm_test,y_svm_test)
+    auc=clsfr.CalAUC()
+    return [m,[],roc_curve,auc]
 
-patience = 30000
-val_freq1 = 62
-nepoch1 = 100
-lam1 = 1e-6
-learning_rate = 0.4
-batchsize = 500
+c_values = 2.**np.arange(-2,6,2)
+c_tester = tester.Classifier_Tester('SVM','C',c_values,c_value_fun)
+c_tester.Running()
+c_tester.PlotROC('SVM_C')
 
-w1 = np.zeros(x_train.shape[1]+1)
-[w1,curve]=lr.LRLearning(w1, x_train, y_train, x_test, y_test, 20, batchsize, learning_rate, patience, lam1, 1,2)
-roc_curve= lr.LRROC(w1,x_test,y_test )
 
-fig1,ax1 = plt.subplots()
-ax1.grid(True)
-ax1.set_title('ROC of a SVM Classifier')
-ax1.set_xlabel('False Alarm Rate')
-ax1.set_ylabel('Recall')
-plt.xlim(1e-5,1)
-l1,=ax1.semilogx(curve1[:,0],curve1[:,1],'r*-',markevery=20)
-l2,=ax1.semilogx(roc_curve[:,0],roc_curve[:,1],'gh-',markevery=20)
-ax1.legend([l1,l2], ['SVM_C=0.5$\gamma=$1','LR with Newton Method'], loc = 'lower right')             #其中，loc表示位置的；
-plt.savefig('svm.svg',format='svg')
+#对Gamma测试
+def g_value_fun(g):
+    fmodel = 'c_{c:.2f}_g_{g:.2f}.model'.format(c = 4,g = g)
+    if os.path.exists(fname):
+        m = svmutil.svm_load_model(fmodel)
+    else:
+        opt_str = '-c {c} -t 2 -g {g} -b 1'.format(c = 4, g = g)
+        m = svmutil.svm_train(y_svm,x_svm,opt_str)
+        svmutil.svm_save_model(fmodel,m)
+    clsfr = classifier.SVM_Classifier(m)
+    roc_curve=clsfr.CalROC(x_svm_test,y_svm_test)
+    auc=clsfr.CalAUC()
+    return [m,[],roc_curve,auc]
+
+g_values = 10.**np.arange(-3,1,1)
+g_tester = tester.Classifier_Tester('SVM','Gamma',g_values,g_value_fun)
+g_tester.Running()
+g_tester.PlotROC('SVM_Gamma')
+
