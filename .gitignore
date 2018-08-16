@@ -1,4 +1,8 @@
-
+*.svg
+*.dat
+*.txt
+*.model
+*.hog
 *.mp4
 *.png
 *.iml
