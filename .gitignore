@@ -9,3 +9,5 @@
 *.pyc
 *.xml
 /venv
+/result/hoop
+/result/label

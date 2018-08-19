@@ -13,11 +13,11 @@ class SVM_Classifier(Classifier):
     def CalROC(self, x_val, y_val):
         prelabel,acc,dec = svmutil.svm_predict(y_val,x_val,self.m, '-b 1')
         dec_ar = np.array(dec)
-        order = np.lexsort(dec_ar[:,1])
+        order = np.lexsort([dec_ar[:,1]])
         (x, y) = (1, 1)
         roc_curve = [[x,y]]
         n_pos = sum(y_val)
-        n_neg = y_val.shape[0] - n_pos
+        n_neg = len(y_val) - n_pos
         for i in order:
             if y_val[i] == 1:
                 y -= 1.0 / n_pos

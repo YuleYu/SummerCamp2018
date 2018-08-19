@@ -14,7 +14,7 @@ class Classifier_Tester:
         self.fun = fun
         self.results = []
         if legends ==[]:
-            self.legend_template = '{name}:{val:.2f}, AUC:{auc:.4f}'
+            self.legend_template = '{name}:{val:.4f}, AUC:{auc:.4f}'
             self.legends = self.values
         else:
             self.legend_template = '{name}:{val}, AUC:{auc:.4f}'
@@ -22,14 +22,14 @@ class Classifier_Tester:
 
     def Running(self):
         for val in self.values:
-            print('Testing {name}:{val}'.format(name=self.name,val=val))
+            print('Testing {name}:{val}'.format(name=self.varname,val=val))
             self.results.append(self.fun(val))
     def PlotROC(self,fname):
-        legend_list = list(self.legend_template.format(name=self.name,val=self.legends[i],auc=self.results[i][3]) for i in range(len(self.values)))
+        legend_list = list(self.legend_template.format(name=self.varname,val=self.legends[i],auc=self.results[i][3]) for i in range(len(self.values)))
         style_list = list('%s%s-'%(style[1],style[0]) for style in itertools.product(['*','+','v'],['b','r','y','m','c','g']))
         fig,ax = plt.subplots()
         ax.grid(True)
-        ax.set_title('ROC of {testname} with Different {name}'.format(testname=self.testname, name=self.name))
+        ax.set_title('ROC of {testname} with Different {name}'.format(testname=self.testname, name=self.varname))
         ax.set_xlabel('False Alarm Rate')
         ax.set_ylabel('Recall')
         plt.xlim(1e-5,1e-1)
@@ -44,11 +44,11 @@ class Classifier_Tester:
 
 
     def PlotLoss(self,fname):
-        legend_list = list(self.legend_template.format(name=self.name,val=self.values[i],auc=self.results[i][3]) for i in range(len(self.values)))
+        legend_list = list(self.legend_template.format(name=self.varname,val=self.values[i],auc=self.results[i][3]) for i in range(len(self.values)))
         style_list = list('%s%s-'%(style[1],style[0]) for style in itertools.product(['*','+','v'],['b','r','y','m','c','g']))
         fig,ax = plt.subplots()
         ax.grid(True)
-        ax.set_title('Loss of {testname} with Different {name}'.format(testname=self.testname,name=self.name))
+        ax.set_title('Loss of {testname} with Different {name}'.format(testname=self.testname,name=self.varname))
         ax.set_xlabel('iter')
         ax.set_ylabel('loss')
         plot_list = []
