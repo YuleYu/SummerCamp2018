@@ -7,6 +7,7 @@ import HOG.ext.sampling
 import numpy as np
 
 script_path = './script/'
+
 mainScript = script_path + 'main_HOG.xml'
 startHOGpic, endHOGpic, showMidResult, video_choice, get_region, pic_path, video_path, result_path = HOG.ext.ReadXML.ReadMainXML(mainScript)
 # ========= setting ====================

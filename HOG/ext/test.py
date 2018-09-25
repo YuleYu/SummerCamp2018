@@ -6,14 +6,17 @@ import matplotlib.pyplot as plt
 import os
 import HOG.ext.functions as func
 from LR.ext.Functions import *
+import profile
 
 home = 'C:/Users/peter/Documents/GitHub/SummerCamp2018/HOG/'
-t_start,t_end,fps,n_col,size_y,size_x,packed_img = fun.ReadPackedImg('result/video1',home)
+t_start,t_end,fps,n_col,size_y,size_x,packed_img = fun.ReadPackedImg(home+'result/video1')
 test_pic = fun.GetOneFrame(packed_img,size_y,size_x,329,n_col)
 # print ("Time of cv2 hog: %d:"% (t_end-t_start).seconds)
 # h_img = fun.HOG_pic_cv2(test_pic,h)
 
 #采集正样本
+h = fun.HOGCalc(test_pic,8,9)
+profile.run('h = fun.HOGCalc(test_pic,8,9)')
 
 f_positive = open(home+'result/video1_pos.txt','r')
 s_pos = []
@@ -56,6 +59,4 @@ train,test = BuildSet(hog_pos,hog_neg,0.2)
 
 
 w,curve = LRLearning(train)
-LRTest(w,test,fun=(lambda x: x))
-LRTest(w,test)
 

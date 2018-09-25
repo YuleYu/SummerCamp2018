@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import os
 import math
 import random
+from scipy.linalg import solve
 
 
 def softmaxLoss(w, train, k):
@@ -136,124 +137,118 @@ def LRDLoss(w, train, label, lam=0.5):
     d_loss[-1]   -= sum(label - h)
     return d_loss / train.shape[0] + lam * w
 
+def LRDDLoss(w, train, label, lam=0.5):
+    dd_loss = np.zeros((w.shape[0],w.shape[0]))
+    h = 1.0 / (1 + np.exp((-np.dot(train, w[0:-1]) - w[-1])))
+    train_h = np.transpose([h]) * train
+    h1 = 1-h
+    train_h1 = train-train_h
+    dd_loss[0:-1,0:-1]= np.dot(train_h.T,train_h1)
+    dd_loss[-1,0:-1] = np.dot(train_h.T,h1)
+    dd_loss[0:-1,-1] = np.dot(train_h.T,h1)
+    dd_loss[-1,-1] = np.dot(h,h1)
+    return dd_loss / train.shape[0] + lam*np.identity(w.shape[0])
 
 # LR学习主程序
 def LRLearning(w, train, label, validate, valabel, n_epoch, batchsize, learning_rate, patience, lam,
-               validation_frequency):
-    # 仿照ppt中代码,加入minibatch,earlystop
-
+               validation_frequency, search_method, obj_val_loss=3.7e-3):
     # 参数初始化
     epoch = 0
-    n_param = train.shape[1] + 1
     # 如果val_loss没有improvement_threshold以上的提升,不改变容忍度
-    improvement_threshold = 0.5
+    improvement_threshold = 1
     # 如果val_loss有improvement_threshold以上提升, 将容忍度提高为迭代数的1.2倍
-    patience_increase = 1.2
-    n_batch = int(np.floor(train.shape[0] / batchsize))
-    # w = -InitParams(n_param)
-    best_validation_loss = 1
-    this_validation_loss = 1
+    patience_increase = 1.5
+    best_validation_loss = ZeroOneLoss(w, validate, valabel)
+    this_validation_loss = obj_val_loss
     curve = []
     done_looping = False
-    batch_pool = miniBatchInit(batchsize, train.shape[0])
-    n_pos = sum(label==1)
-    rescal = (label.shape[0]-n_pos) / n_pos
+    # batch_pool = miniBatchInit(batchsize, train.shape[0])
+    w_best = w
 
     # 主循环
     while epoch < n_epoch and (not done_looping):
         epoch += 1
-        for batch_id in range(batch_pool.shape[0]):
-            minibatch_id = batch_pool[batch_id]
+        batch_pool = miniBatchInit(batchsize, train.shape[0])
+        if search_method == 0: # Gradient without line search
+            for batch_id in range(batch_pool.shape[0]):
+                minibatch_id = batch_pool[batch_id]
+                batch = train[minibatch_id]
+                batch_label = label[minibatch_id]
+                dloss = LRDLoss(w, batch, batch_label, lam)
+                dloss /= np.sqrt(np.dot(dloss, dloss))
+                w -= dloss * learning_rate
 
-            batch = train[minibatch_id]
-            batch_label = label[minibatch_id]
-
-            n_neg = sum(batch_label != 1)
-            n_pos = sum(batch_label)
-            batch_id_neg = np.arange(batchsize)[batch_label!=1] #batch_id_neg为 batch中所有负样本的下标
-            resample_id = batch_id_neg[random.sample(range(n_neg),int(n_neg * 0.02))] #batch_id_neg 中留下样本的下标
-            re_id = batch_label == 1 #最终留下样本的mask,正样本全部留下
-            re_id[resample_id] = True #负样本留下的部分的mask
-            n_final = sum(re_id)
-            new_batch = batch[re_id]
-            new_label = batch_label[re_id]
-            # loss = LRLoss(w, batch, batch_label)
-            # dloss = LRDLoss(w, new_batch, new_label, lam)
-            dloss = LRDLoss(w, train, label, lam)
-            dloss /= np.sqrt(np.dot(dloss, dloss))
-            w -= dloss * learning_rate
-
-            iter = (epoch - 1) * batch_pool.shape[0] + batch_id
-            if (iter + 1) % validation_frequency == 0:
-                # trainloss = LRLoss(w, batch, batch_label, lam)
-                trainloss = LRLoss(w, train, label, lam)
-                print( 'epoch: %i, minibatch: %i/%i, iter: %i, n_pos: %d, n_final: %d, patience: %d, training loss: %f validation error %f %%' % (
+                iter = (epoch - 1) * batch_pool.shape[0] + batch_id
+                if (iter + 1) % validation_frequency == 0:
+                    # trainloss = LRLoss(w, batch, batch_label, lam)
+                    trainloss = LRLoss(w, train, label, lam)
+                    print( 'epoch: %i, minibatch: %i/%i, iter: %i, patience: %d, training loss: %f validation error %f %% best validation error %f %%' % (
                         epoch,
                         batch_id + 1,
                         batch_pool.shape[0],
                         iter,
-                        n_pos,
-                        n_final,
                         patience,
                         trainloss,
-                        this_validation_loss * 100))
+                        this_validation_loss * 100,
+                        best_validation_loss * 100))
+                    curve.append([iter, trainloss])
+                    this_validation_loss = ZeroOneLoss(w, validate, valabel)
+                    if this_validation_loss < best_validation_loss:
+                        if this_validation_loss < best_validation_loss * improvement_threshold:
+                            patience = max(patience, iter * patience_increase)
+                        best_validation_loss = this_validation_loss
+                        w_best = w
+                    if patience <= iter:
+                        done_looping = True
+                        break
+                    if best_validation_loss < obj_val_loss:
+                        break
+
+        elif search_method == 2: #Newton method 牛顿法
+            dloss = LRDLoss(w, train, label, lam)
+            ddloss = LRDDLoss(w,train,label,lam)
+            w -= solve(ddloss,dloss)
+            iter = epoch - 1
+            if (iter + 1) % validation_frequency == 0:
+                # trainloss = LRLoss(w, batch, batch_label, lam)
+                trainloss = LRLoss(w, train, label, lam)
+                print('epoch: %i, iter: %i, patience: %d, training loss: %f validation error %f %%, best val_error: %f %%' % (
+                    epoch,
+                    iter,
+                    patience,
+                    trainloss,
+                    this_validation_loss * 100,
+                    best_validation_loss * 100))
                 curve.append([iter, trainloss])
                 this_validation_loss = ZeroOneLoss(w, validate, valabel)
                 if this_validation_loss < best_validation_loss:
                     if this_validation_loss < best_validation_loss * improvement_threshold:
                         patience = max(patience, iter * patience_increase)
                     best_validation_loss = this_validation_loss
+                    w_best = w
                 if patience <= iter:
-                    done_looping = True
                     break
-                if best_validation_loss < 1e-3:
+                if best_validation_loss < obj_val_loss:
                     break
-
-    # #主循环,采用简单学习率衰减法
-    # while err > max_err and it < max_iter:
-    #     it += 1
-    #
-    #     #计算下降方向
-    #     grad_direct = LRDLoss(w,train)
-    #     grad_mag = np.sqrt(sum(grad_direct**2))
-    #     grad_direct /= -grad_mag
-    #
-    #     #计算新参数值 w_new
-    #     w_new = w + grad_direct * step
-    #     loss_new = LRLoss(w_new,train)
-    #     err_new = abs(loss_new - loss)
-    #     if loss_new >= loss:
-    #         step *= 0.8
-    #     else:
-    #         err,loss,w=err_new,loss_new,w_new
-    #     print("err:%f,step:%f,loss:%f"%(err,step,loss))
-    #     curve.append(loss)
     curve = np.array(curve)
-    return [w, curve]
+    return [w_best, curve]
 
 
-def LRROC(w, test):
-    roc_dots = []
-    for sample in test:
-        y = sample[1]
-        x = sample[2:sample.size]
-        x = np.append(x, 1)
-        value = np.dot(w, x)
-        roc_dots.append([sample[0], y, value])
-    roc_dots = np.array(roc_dots)
+def LRROC(w, test, label):
+    roc_dots = np.zeros((label.shape[0],2))
+    roc_dots[:,-1] = np.dot(test,w[0:-1])+w[-1]
+    roc_dots[:,0] = label
+
     roc_dots = roc_dots[np.lexsort(roc_dots.T)]
-    (x, y) = (0, 0)
-    roc_curve = [[x, y]]
-    n_pos = sum(test[:, 1])
+    (x, y) = (1, 1)
+    roc_curve = [[x,y]]
+    n_pos = sum(label)
     n_neg = test.shape[0] - n_pos
     for elem in roc_dots:
-        if elem[1] == 1:
-            x += 1.0 / n_pos
-        elif elem[1] == 0:
-            y += 1.0 / n_neg
+        if elem[0] == 1:
+            y -= 1.0 / n_pos
+        elif elem[0] == 0:
+            x -= 1.0 / n_neg
         roc_curve.append([x, y])
     roc_curve = np.array(roc_curve)
-    # plt.plot(fun(roc_curve[:,0]),roc_curve[:,1])
-    plt.xlim(1e-4, 1)
-    plt.semilogx((roc_curve[:, 0]), roc_curve[:, 1])
     return roc_curve
