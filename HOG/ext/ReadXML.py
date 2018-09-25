@@ -17,6 +17,7 @@ def ReadXML(path: object) -> object:
 
     return imgPath, size_x, size_y, startTime, endTime, colSize, fps, bin
 
+
 def ReadMainXML(path: object) -> object:
     dom = xml.dom.minidom.parse(path)
     root = dom.documentElement
@@ -26,5 +27,8 @@ def ReadMainXML(path: object) -> object:
     showMidResult = bool(int(root.getElementsByTagName('midResult')[0].childNodes[0].data))
     video_choice = root.getElementsByTagName('videoName')[0].childNodes[0].data
     get_region = bool(int(root.getElementsByTagName('getRegion')[0].childNodes[0].data))
+    img_path = root.getElementsByTagName('picPath')[0].childNodes[0].data
+    video_path = root.getElementsByTagName('videoPath')[0].childNodes[0].data
+    result_path = root.getElementsByTagName('resultPath')[0].childNodes[0].data
 
-    return startFrame, endFrame, showMidResult, video_choice, get_region
+    return startFrame, endFrame, showMidResult, video_choice, get_region, img_path, video_path, result_path

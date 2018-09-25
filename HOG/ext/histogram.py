@@ -1,3 +1,5 @@
+# HOG 绘制参考文件
+
 from __future__ import division
 
 # Author: Jean KOSSAIFI <jean.kossaifi@gmail.com>

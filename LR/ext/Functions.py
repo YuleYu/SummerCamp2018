@@ -72,23 +72,6 @@ def miniBatch(image, label, batchSizeNum):
     return image_out, label_out
 
 
-def CalcSample(s, y):
-    # 计算样本的hog,正样本y=1,负样本y=0
-    hog_list = []
-    start_time = datetime.datetime.now()
-    for (i, pic) in s:
-        hog = np.array(fun.HOGCalc(pic, 8, 9))
-        sample = np.zeros((hog.size + 2))
-        sample[0] = i
-        sample[1] = y
-        sample[2:hog.size + 2] = hog.reshape(hog.size)
-        hog_list.append(sample)
-    end_time = datetime.datetime.now()
-    print((end_time - start_time).seconds)
-    hog_list = np.array(hog_list)
-    return hog_list
-
-
 def GenROC(fpos, fneg):
     fpos.sort()
     fneg.sort()
