@@ -82,6 +82,8 @@ dist_neg = np.zeros((hog_neg.shape[0]))
 for i in range(hog_neg.shape[0]):
     dist_neg[i] = np.sqrt(sum((hog_neg[i]-center_pos).reshape(hog_neg[i].size)**2))
 
+
+
 h = HOG.ext.hog_compute.LoadHOG(result_path + video_choice)  # open .hog file
 label = HOG.ext.sampling.GenLabel((result_path + video_choice), (endTime - startTime) * fps)
 train_id,test_id = HOG.ext.sampling.HoldOut((endTime - startTime) * fps)
